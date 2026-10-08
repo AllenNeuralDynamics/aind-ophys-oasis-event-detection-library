@@ -22,10 +22,8 @@ dependencies = [
     "aind-data-schema-models==6.2.0",
     "aind-pophys-metadata @ git+https://github.com/AllenNeuralDynamics/aind-pophys-metadata.git@v0.2.0",
     "log-schema[cloudwatch] @ git+https://github.com/AllenNeuralDynamics/log-schema.git@f09685e#subdirectory=python",
-    "oasis-deconv==0.2.0",
-    # oasis-deconv 0.2.0 passes 2-D columns to scipy.linalg.toeplitz and
-    # relies on a 2-D result; scipy 1.17 returns 3-D and deconvolve() fails.
-    # 1.15.3 is also the newest scipy supporting Python 3.10.
+    "oasis-deconv==0.3.2",
+    # Newest scipy supporting Python 3.10.
     "scipy==1.15.3",
     "numpy==2.2.6",
     "h5py==3.16.0",
