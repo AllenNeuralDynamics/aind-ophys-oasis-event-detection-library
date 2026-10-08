@@ -1,12 +1,10 @@
 """OASIS deconvolution, HDF5 output and per-ROI QC plots."""
 
-from datetime import datetime as dt
 import functools
 import logging
 from multiprocessing.pool import Pool
 from pathlib import Path
 from typing import Optional, Tuple
-from typing import Union
 
 import h5py
 import matplotlib
@@ -34,49 +32,6 @@ DFF_DIR_GLOB = "*/dff/"
 DFF_FILE_GLOB = "*dff.h5"
 EVENTS_SUBDIR = "events"
 PLOTS_SUBDIR = "plots"
-
-
-def write_data_process(
-    metadata: dict,
-    input_fp: Union[str, Path],
-    output_fp: Union[str, Path],
-    unique_id: str,
-    start_time: dt,
-    end_time: dt,
-) -> None:
-    """Writes output metadata to plane processing.json
-
-    Parameters
-    ----------
-    metadata: dict
-        parameters from suite2p motion correction
-    raw_movie: str
-        path to raw movies
-    output_fp: str
-        path to motion corrected movies
-    unique_id: str
-        unique identifier for the processing
-    start_time: dt
-        start time of processing
-    end_time: dt
-        end time of processing
-    """
-    data_proc = DataProcess(
-        name=ProcessName.FLUORESCENCE_EVENT_DETECTION,
-        software_version=os.getenv("VERSION", ""),
-        start_date_time=start_time.isoformat(),
-        end_date_time=end_time.isoformat(),
-        input_location=str(input_fp),
-        output_location=str(output_fp),
-        code_url=(os.getenv("REPO_URL", "")),
-        parameters=metadata,
-    )
-    if isinstance(output_fp, str):
-        output_dir = Path(output_fp).parent
-    else:
-        output_dir = output_fp.parent
-    with open(output_dir / f"{unique_id}_oasis_events_data_process.json", "w") as f:
-        json.dump(json.loads(data_proc.model_dump_json()), f, indent=4)
 
 
 def find_dff_traces(input_dir: Path) -> Tuple[Path, str]:
@@ -423,33 +378,3 @@ def write_qc_plots(
             ),
         )
     return plots_path
-
-
-if __name__ == "__main__":
-    args = parser.parse_args()
-    params = vars(args)
-    start_time = dt.now()
-    output_dir = Path(args.output_dir).resolve()
-    input_dir = Path(args.input_dir).resolve()
-    output_dir = make_output_directory(output_dir, experiment_id)
-    setup_logging(
-        "aind-ophys-oasis-event-detection", mouse_id=subject_id, session_name=name
-    )
-    try:
-        print(f"Performing Event Detection for {experiment_id}")
-
-        logging.info(f"SUCCESS: {experiment_id}")
-    except Exception as e:
-        logging.error(f"FAILED: {experiment_id}")
-        raise e
-
-    write_data_process(
-        params,
-        dff_fp,
-        oasis_h5,
-        experiment_id,
-        start_time,
-        end_time=dt.now(),
-    )
-
-    write_qc_evalutation(output_dir, experiment_id, N)
