@@ -1,11 +1,4 @@
-"""Deconvolution parameter resolution for OASIS event detection.
-
-Pure, numpy-only logic: converting decay/rise time constants into the
-coefficients of the auto-regressive process OASIS fits, and resolving the
-parameter set actually handed to ``oasis.functions.deconvolve``. Kept
-separate from :mod:`job` and :mod:`events` so the trickiest arithmetic in
-this step is unit-tested rather than coverage-omitted.
-"""
+"""Deconvolution parameter resolution for OASIS event detection."""
 
 import logging
 from typing import Optional, Tuple
@@ -27,10 +20,8 @@ def ar_coefficients(
 ) -> Tuple[Optional[float], ...]:
     """Convert time constants to auto-regressive process coefficients.
 
-    ``tau_rise == 0`` selects a single-coefficient AR1 model; any other
-    value selects a two-coefficient AR2 model. A ``tau`` of ``None`` leaves
-    the coefficients unset (``None``), which instructs OASIS to estimate
-    them from the autocovariance of the data.
+    ``tau_rise == 0`` selects AR1, any other value AR2. A ``tau`` of
+    ``None`` leaves the coefficients unset for OASIS to estimate.
 
     Parameters
     ----------
@@ -88,9 +79,8 @@ def taus_from_ar_coefficients(
 def resolve_parameters(settings: OasisSettings, frame_rate: float) -> dict:
     """Resolve the parameter set passed to OASIS for this run.
 
-    Maps the settings field names onto the keyword names OASIS expects
-    (``baseline`` -> ``b``, ``baseline_nonneg`` -> ``b_nonneg``,
-    ``optimize_tau`` -> ``optimize_g``) and applies the
+    Maps the settings onto the keyword names OASIS expects (``baseline``
+    -> ``b``, ``optimize_tau`` -> ``optimize_g``) and applies the
     ``estimate_parameters=False`` fallbacks.
 
     Parameters
@@ -108,9 +98,7 @@ def resolve_parameters(settings: OasisSettings, frame_rate: float) -> dict:
     Raises
     ------
     ValueError
-        If ``estimate_parameters`` is False and no ``tau`` was provided —
-        OASIS cannot run without either an explicit decay time or the
-        freedom to estimate one.
+        If ``estimate_parameters`` is False and no ``tau`` was provided.
     """
     lam = settings.lam
     baseline = settings.baseline
@@ -139,7 +127,7 @@ def resolve_parameters(settings: OasisSettings, frame_rate: float) -> dict:
         "g": ar_coefficients(settings.tau, settings.tau_rise, frame_rate),
         "sn": settings.sn,
         "b": baseline,
-        "b_nonneg": settings.baseline_nonneg,
+        "b_nonneg": settings.b_nonneg,
         "penalty": settings.penalty,
         "optimize_g": settings.optimize_tau,
         "lam": lam,

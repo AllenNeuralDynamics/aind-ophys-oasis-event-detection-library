@@ -58,7 +58,7 @@ class TestEventsCurationMetric(unittest.TestCase):
         self.assertTrue(metric.status_history)
 
     def test_carries_evaluation_tag(self) -> None:
-        """default_grouping is ["evaluation"], so the tag must be present."""
+        """The metric carries the evaluation and type tags."""
         metric = qc.build_events_curation_metric(EXPERIMENT_ID, 1)
         self.assertEqual(metric.tags["evaluation"], qc.EVALUATION)
         self.assertEqual(metric.tags["type"], qc.METRIC_TYPE)

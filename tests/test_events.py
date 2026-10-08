@@ -1,14 +1,4 @@
-"""Tests for the upstream-artifact lookup, deconvolution and the outputs.
-
-``events`` is coverage-omitted (heavy compute), but the upstream lookup is
-tested anyway: it must fail with the pattern and directory named, never with
-a bare ``next(glob(...))`` StopIteration that carries no context.
-
-Every trace and every deconvolution result here is a numpy array at a
-production shape. That is what the HDF5 writer, the ``[:, None]`` baseline
-broadcast and the per-ROI plot fan-out actually receive; a list-shaped
-fixture satisfies none of those operations while still passing the suite.
-"""
+"""Tests for the dF/F lookup, deconvolution and outputs."""
 
 import sys
 import tempfile
@@ -31,11 +21,7 @@ N_FRAMES = 500
 
 
 def _settings(**kwargs: Any) -> OasisSettings:
-    """Construct settings with a clean ``sys.argv``.
-
-    ``cli_parse_args=True`` would otherwise consume the test runner's own
-    arguments and abort with SystemExit.
-    """
+    """Construct settings with a clean ``sys.argv``."""
     with patch.object(sys, "argv", ["oasis.py"]):
         return OasisSettings(**kwargs)
 
@@ -66,7 +52,7 @@ def synthetic_dff_traces(n_rois: int = N_ROIS) -> np.ndarray:
 
 
 class TestFindDffTraces(unittest.TestCase):
-    """The upstream dF/F lookup must fail with context, never StopIteration."""
+    """The upstream dF/F lookup and its errors."""
 
     def test_locates_traces_and_experiment_id(self) -> None:
         """The experiment id comes from the dff directory's parent."""
@@ -140,7 +126,7 @@ class TestEventsHdf5(unittest.TestCase):
 
 
 class TestRunDeconvolutionNoRois(unittest.TestCase):
-    """The zero-ROI path must not spawn a pool or index empty arrays."""
+    """The zero-ROI path."""
 
     def test_empty_traces_ar1(self) -> None:
         """No ROIs yields zero-length arrays of the populated path's dtype."""
@@ -169,12 +155,7 @@ class TestRunDeconvolutionNoRois(unittest.TestCase):
         self.assertEqual(result["tau_rise_hat"].shape, (0,))
 
     def test_empty_estimates_write_and_plot_as_arrays(self) -> None:
-        """The zero-ROI result stays usable by both output writers.
-
-        ``write_events_h5`` stores the estimates as datasets and
-        ``write_qc_plots`` indexes ``b_hat`` with ``[:, None]``, so these
-        entries have to be arrays rather than lists.
-        """
+        """The zero-ROI estimates are arrays both output writers accept."""
         result = events.run_deconvolution(
             traces=np.empty((0, 6), dtype="f4"),
             params={},
@@ -239,7 +220,7 @@ class TestDeconvolveRealTraces(unittest.TestCase):
             self.assertEqual(len(sorted(plots_path.glob("*.png"))), N_ROIS)
 
     def test_a_nan_trace_is_returned_as_nan(self) -> None:
-        """A dropped ROI yields all-NaN output instead of raising."""
+        """A trace with a NaN yields all-NaN output."""
         trace = synthetic_dff_traces(1)[0]
         trace[10] = np.nan
         calcium, spikes, b_hat, g_hat, lam_hat = events.deconvolve_trace(

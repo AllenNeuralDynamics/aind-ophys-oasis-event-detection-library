@@ -3,14 +3,15 @@
 import json
 import tempfile
 import unittest
+from importlib.metadata import version
 from pathlib import Path
 
 from aind_data_schema.components.identifiers import Code
-from aind_pophys_metadata import processing as shared_processing
 
 from aind_ophys_oasis_event_detection_library.utils import metadata_utils as mu
 from tests import fixtures
 
+LIBRARY = "aind-ophys-oasis-event-detection-library"
 PLANE_ID = "plane_0"
 PROCESSING_JSON = "processing.json"
 
@@ -101,7 +102,7 @@ class TestLoadOasisMetadata(unittest.TestCase):
         self.assertEqual(metadata.frame_rate, 7.5)
 
     def test_metadata_frame_rate_wins_over_the_cli_override(self) -> None:
-        """The override is a fallback, never a replacement."""
+        """The metadata frame rate takes precedence over the override."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             _write(root, "session.json", fixtures.v1_session())
@@ -131,7 +132,7 @@ class TestLoadOasisMetadata(unittest.TestCase):
                 mu.load_oasis_metadata(Path(tmp))
 
     def test_both_core_files_is_ambiguous(self) -> None:
-        """Both core files present is ambiguous and must not be guessed."""
+        """Both core files present raises ValueError."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             _write(root, "session.json", fixtures.v1_session())
@@ -161,7 +162,7 @@ class TestUpstreamProcessNames(unittest.TestCase):
         self.assertEqual(names, ["A: dF/F estimation", "A: Video motion correction"])
 
     def test_excludes_this_process(self) -> None:
-        """A step can never become its own dependency."""
+        """This process's own name is excluded."""
         own_name = f"{PLANE_ID}: {mu.PROCESS_TYPE.value}"
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -177,21 +178,13 @@ class TestUpstreamProcessNames(unittest.TestCase):
 class TestBuildCode(unittest.TestCase):
     """The Code block identifying which artifact produced the outputs."""
 
-    def test_url_is_the_backing_library_landing_page(self) -> None:
-        """Code identity names the backing library, not the wrapper."""
+    def test_identity_is_the_installed_library(self) -> None:
+        """name, version and url all describe this library's package."""
         code = mu.build_code({})
         self.assertIsInstance(code, Code)
-        self.assertEqual(
-            str(code.url),
-            f"https://github.com/AllenNeuralDynamics/{mu.LIBRARY_NAME}",
-        )
-
-    def test_version_is_the_installed_library_version(self) -> None:
-        """The released library version is the only source of the version."""
-        self.assertEqual(
-            mu.build_code({}).version,
-            shared_processing.library_version(mu.LIBRARY_NAME),
-        )
+        self.assertEqual(code.name, LIBRARY)
+        self.assertEqual(code.version, version(LIBRARY))
+        self.assertEqual(str(code.url), f"https://github.com/AllenNeuralDynamics/{LIBRARY}")
 
     def test_parameters_and_input_data_recorded(self) -> None:
         """Run parameters and input provenance land on the Code block."""

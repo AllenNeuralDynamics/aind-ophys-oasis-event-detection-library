@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "aind-ophys-oasis-event-detection-library"
 description = "OASIS fluorescence event detection for AIND ophys pipelines"
 license = "MIT"
-# Ceiling matches aind-pophys-metadata's requires-python.
 requires-python = ">=3.10,<3.13"
 authors = [
     {name = "Allen Institute for Neural Dynamics"}
@@ -20,10 +19,9 @@ version = "0.1.0"
 dependencies = [
     "aind-data-schema==2.9.0",
     "aind-data-schema-models==6.2.0",
-    "aind-pophys-metadata @ git+https://github.com/AllenNeuralDynamics/aind-pophys-metadata.git@v0.2.0",
+    "aind-pophys-metadata @ git+https://github.com/AllenNeuralDynamics/aind-pophys-metadata.git@ba60ba340de7c273d7801d21c4d45fbb9bb7f45f",
     "log-schema[cloudwatch] @ git+https://github.com/AllenNeuralDynamics/log-schema.git@f09685e#subdirectory=python",
     "oasis-deconv==0.3.2",
-    # Newest scipy supporting Python 3.10.
     "scipy==1.15.3",
     "numpy==2.2.6",
     "h5py==3.16.0",
@@ -33,6 +31,9 @@ dependencies = [
     "pydantic-settings==2.14.2",
     "pytz==2026.3.post1",
 ]
+
+[project.urls]
+Repository = "https://github.com/AllenNeuralDynamics/aind-ophys-oasis-event-detection-library"
 
 [dependency-groups]
 dev = [
@@ -70,9 +71,6 @@ exclude = '''
 )
 '''
 
-# events.py + job.py are temporarily omitted from coverage: they were
-# inherited from the production capsule, which shipped without unit tests, and
-# are for now exercised by the Code Ocean data-run.
 [tool.coverage.run]
 omit = [
     "*/aind_ophys_oasis_event_detection_library/__init__.py",

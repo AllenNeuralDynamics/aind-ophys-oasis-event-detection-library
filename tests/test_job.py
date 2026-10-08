@@ -1,9 +1,4 @@
-"""Tests for the event-detection stage body over real compute results.
-
-The traces arrive from an HDF5 file written the way the dF/F step writes
-it, so deconvolution, the NaN count, the HDF5 writer and the per-ROI QC
-figures all run against numpy arrays at production shapes.
-"""
+"""Tests for the event-detection stage body."""
 
 import tempfile
 import unittest
@@ -66,7 +61,7 @@ class TestRunEventDetection(unittest.TestCase):
         self.assertEqual(summary["num_nan_samples"], 0)
 
     def test_nan_samples_are_counted(self) -> None:
-        """A dropped ROI is reported rather than silently deconvolved."""
+        """NaN samples are counted in the summary."""
         traces = synthetic_dff_traces()
         traces[0, :3] = np.nan
         with tempfile.TemporaryDirectory() as tmp:

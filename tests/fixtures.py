@@ -1,13 +1,4 @@
-"""Minimal v1 and v2 metadata fixtures shared by the tests.
-
-Deliberately minimal: only the fields the getters actually read, so the
-tests prove the library tolerates messy-but-sufficient metadata rather than
-requiring a fully-validating document. The v2 discriminator strings are
-resolved from the schema classes, matching how the shared read layer works.
-
-Lives in ``tests/`` because ``[tool.coverage.run] source`` includes
-``tests``; keep it exercised by the tests that import it.
-"""
+"""Minimal v1 and v2 metadata fixtures shared by the tests."""
 
 from typing import Optional
 

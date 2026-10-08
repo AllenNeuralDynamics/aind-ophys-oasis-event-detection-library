@@ -1,12 +1,4 @@
-"""OASIS deconvolution, HDF5 output and per-ROI QC plots.
-
-The heavy compute for event detection. ``job.run`` orchestrates; everything
-that touches OASIS, HDF5 or matplotlib lives here.
-
-Deconvolution runs one trace per worker through a module-level function
-bound with :func:`functools.partial`, so the work function pickles under
-every multiprocessing start method (a closure only survives ``fork``).
-"""
+"""OASIS deconvolution, HDF5 output and per-ROI QC plots."""
 
 import functools
 import logging
@@ -46,9 +38,6 @@ def find_dff_traces(input_dir: Path) -> Tuple[Path, str]:
     """Locate the upstream dF/F traces and derive the experiment id.
 
     The dF/F step publishes ``<experiment_id>/dff/<experiment_id>_dff.h5``.
-    Both lookups go through the shared ``find_one``, so a renamed upstream
-    artifact fails with the pattern and the directory named rather than with
-    a bare ``StopIteration`` that carries no context.
 
     Parameters
     ----------
@@ -116,8 +105,7 @@ def deconvolve_trace(
 ) -> tuple:
     """Deconvolve one dF/F trace into denoised calcium and events.
 
-    A trace containing any NaN is returned as all-NaN rather than raising,
-    so one dropped ROI cannot fail the whole plane.
+    A trace containing any NaN is returned as all-NaN.
 
     Parameters
     ----------
@@ -196,8 +184,8 @@ def run_deconvolution(
         ``denoised`` and ``events``, both ``f4`` arrays of shape
         ``(n_rois, n_frames)``, and, when estimating, the ``f4`` per-ROI
         arrays ``b_hat``, ``tau_hat``, ``lam_hat`` and (AR2 only)
-        ``tau_rise_hat``, each of shape ``(n_rois,)``. The zero-ROI plane
-        returns the same keys with the same dtype at length 0, never lists.
+        ``tau_rise_hat``, each of shape ``(n_rois,)``. A zero-ROI plane
+        returns the same keys at length 0.
     """
     n_rois, n_frames = traces.shape
     if not n_rois:

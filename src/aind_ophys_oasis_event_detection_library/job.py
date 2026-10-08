@@ -1,15 +1,4 @@
-"""Top-level OASIS event-detection orchestration.
-
-``run()`` is the library entry point called by the thin runtime wrapper:
-read metadata (v1 or v2) -> configure logging -> locate the upstream dF/F
-traces -> deconvolve -> write the events HDF5 + per-ROI QC figures -> emit
-a full ``processing.json`` and ``quality_control.json``.
-
-The shared ``stage_guard`` owns the ``processing.json`` lifecycle: it stamps
-the timings, emits the stage markers and writes the document on both the
-success and the error path, so a failed run still leaves a description of
-what was attempted with the error recorded in ``notes``.
-"""
+"""OASIS event-detection entry point."""
 
 import logging
 import os
@@ -83,8 +72,7 @@ def _plan_run(
 ) -> RunPlan:
     """Resolve inputs, plane id, output directory and OASIS parameters.
 
-    Runs before the stage guard so the guard can be entered with the plane
-    id and output path it needs to name and place the document.
+    Called before the stage guard, which needs the plane id and output path.
 
     Parameters
     ----------
@@ -134,9 +122,8 @@ def _run_event_detection(
     Returns
     -------
     dict
-        Summary statistics describing this step's outputs, written to
-        ``DataProcess.output_parameters`` so a reviewer can triage without
-        opening the data. Input parameters belong on ``code.parameters``.
+        Summary statistics of this step's outputs, written to
+        ``DataProcess.output_parameters``.
     """
     traces = events.read_dff_traces(plan.dff_fp)
     num_rois, num_frames = traces.shape
@@ -198,8 +185,7 @@ def run(settings: Optional[OasisSettings] = None) -> None:
     try:
         plan = _plan_run(settings, metadata, input_dir, results_root)
     except BaseException:
-        # The plane is not known yet, so the document lands at the results
-        # root without a plane id rather than not being written at all.
+        # Plane not known yet: write the document at the results root.
         with stage_guard(
             results_root,
             mu.PROCESS_TYPE,

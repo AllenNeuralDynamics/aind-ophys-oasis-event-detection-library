@@ -55,8 +55,7 @@ Everything is written under `<output_dir>/<experiment_id>/events/`:
 `stage_guard`, which owns the `processing.json` lifecycle.
 
 ### `settings.py`
-`OasisSettings`, the CLI/environment settings model. Import-light, and the source the Code Ocean
-app panel is generated from.
+`OasisSettings`, the CLI/env settings model; the Code Ocean app panel is generated from it.
 
 ### `params.py`
 `ar_coefficients()`, `taus_from_ar_coefficients()`, `resolve_parameters()` and

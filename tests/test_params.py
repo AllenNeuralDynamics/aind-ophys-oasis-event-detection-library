@@ -81,9 +81,9 @@ class TestResolveParameters(unittest.TestCase):
         self.assertEqual(params["g"], (None,))
 
     def test_field_names_mapped_to_oasis_kwargs(self) -> None:
-        """baseline/baseline_nonneg/optimize_tau map onto OASIS kwargs."""
+        """baseline/b_nonneg/optimize_tau map onto OASIS kwargs."""
         params = resolve_parameters(
-            _settings(baseline=3.0, baseline_nonneg=False, optimize_tau=5),
+            _settings(baseline=3.0, b_nonneg=False, optimize_tau=5),
             FRAME_RATE,
         )
         self.assertEqual(params["b"], 3.0)

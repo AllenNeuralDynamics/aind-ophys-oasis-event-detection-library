@@ -1,11 +1,4 @@
-"""Tests for OasisSettings, including the app-panel drivability contract.
-
-A Code Ocean app panel can only emit ``--name=value``. Two properties must
-therefore hold for every settings field, and are asserted here rather than
-trusted to the generator: the field parses in that form, and its name is
-longer than one character (pydantic-settings renders a one-character field
-as a short option, which the panel can never produce).
-"""
+"""Tests for OasisSettings and the app-panel contract."""
 
 import sys
 import typing
@@ -56,7 +49,7 @@ class TestOasisSettingsDefaults(unittest.TestCase):
         self.assertEqual(settings.tau_rise, 0)
         self.assertEqual(settings.optimize_tau, 0)
         self.assertIsNone(settings.baseline)
-        self.assertTrue(settings.baseline_nonneg)
+        self.assertTrue(settings.b_nonneg)
         self.assertIsNone(settings.sn)
         self.assertEqual(settings.penalty, 1)
         self.assertIsNone(settings.lam)
@@ -91,7 +84,7 @@ class TestSampleCliValue(unittest.TestCase):
 
 
 class TestAppPanelContract(unittest.TestCase):
-    """Every field must be drivable by a Code Ocean app panel."""
+    """Every field is drivable by a Code Ocean app panel."""
 
     def test_no_single_character_field_names(self) -> None:
         """No field name is one character long."""

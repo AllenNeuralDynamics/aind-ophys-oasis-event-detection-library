@@ -1,11 +1,4 @@
-"""aind-data-schema v1/v2 metadata reads for OASIS event detection.
-
-A thin, step-specific layer over the shared ``aind_pophys_metadata``
-library: the v1/v2 dict paths, schema-version dispatch, the frame-rate
-resolution order and the ``Processing`` builders all live in the shared
-library, so this module only assembles the ``OasisMetadata`` view and this
-step's ``Code`` block.
-"""
+"""Acquisition metadata and Code identity for OASIS event detection."""
 
 import logging
 from dataclasses import dataclass
@@ -20,8 +13,6 @@ from aind_pophys_metadata import processing as shared_processing
 logger = logging.getLogger(__name__)
 
 PROCESS_NAME = "aind-ophys-oasis-event-detection"
-LIBRARY_NAME = "aind-ophys-oasis-event-detection-library"
-LIBRARY_URL = "https://github.com/AllenNeuralDynamics/aind-ophys-oasis-event-detection-library"
 PROCESS_TYPE = ProcessName.FLUORESCENCE_EVENT_DETECTION
 
 
@@ -29,10 +20,8 @@ PROCESS_TYPE = ProcessName.FLUORESCENCE_EVENT_DETECTION
 class OasisMetadata:
     """Minimal metadata OASIS event detection consumes.
 
-    ``frame_rate`` is the only field the computation needs — it converts the
-    configured decay/rise times into auto-regressive coefficients. The other
-    fields are identifiers used for logging context, so all stay optional (a
-    partial-metadata asset must still be processable).
+    Only ``frame_rate`` is required; the identifiers are optional and used
+    for logging context.
 
     Attributes
     ----------
@@ -56,9 +45,7 @@ def load_oasis_metadata(
     """Read the acquisition metadata event detection consumes from ``input_dir``.
 
     The shared loader locates and reads the core file; the frame rate falls
-    back to ``platform.json`` and then to ``cli_frame_rate``. A missing frame
-    rate is fatal here rather than deep in the run: event detection cannot
-    convert time constants into auto-regressive coefficients without one.
+    back to ``platform.json`` and then to ``cli_frame_rate``.
 
     Parameters
     ----------
@@ -104,8 +91,7 @@ def upstream_process_names(
     input_dir : Path
         Input directory, searched recursively.
     plane_id : str, optional
-        Plane id this task ran on, used to compose this process's own name
-        so it can never appear as its own dependency.
+        Plane id this task ran on; this process's own name is excluded.
 
     Returns
     -------
@@ -127,20 +113,18 @@ def build_code(
     Parameters
     ----------
     parameters : dict
-        Resolved run parameters (the inputs to this step). Output summary
-        statistics belong in ``DataProcess.output_parameters``, never here.
+        Resolved run parameters recorded on the code block.
     input_data : list of str, optional
         Input data path(s)/asset name(s) for provenance.
 
     Returns
     -------
     Code
-        The populated code block.
+        The populated code block; name, version and url are this library's
+        installed package metadata.
     """
     return shared_processing.build_code(
-        name=PROCESS_NAME,
-        library_name=LIBRARY_NAME,
-        url=LIBRARY_URL,
+        __name__,
         parameters=parameters,
         input_data=input_data,
     )

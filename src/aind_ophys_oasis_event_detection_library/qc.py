@@ -1,16 +1,4 @@
-"""quality_control.json generation for OASIS event detection.
-
-Step-specific metric content over the shared ``aind_pophys_metadata``
-QC builders; the ``QualityControl`` wrapper (with the project-standard
-``default_grouping``) and the writer both live in the shared library.
-
-The per-ROI curation payload is the **core**
-``aind_data_schema.core.quality_control.CurationMetric``, placed directly
-into ``QualityControl.metrics``: v2 removed ``QCEvaluation`` and qcportal no
-longer exports a ``CurationMetric``. The core class requires ``type`` and a
-list ``value``, and an empty ``status_history`` makes ``QualityControl``
-raise ``IndexError`` while deriving its status, so one status is seeded.
-"""
+"""quality_control.json content for OASIS event detection."""
 
 from datetime import datetime as dt
 from pathlib import Path
@@ -41,8 +29,8 @@ def roi_plot_references(
 ) -> List[dict]:
     """Build the per-ROI plot reference payload for the curation metric.
 
-    Each entry points a reviewer at one ROI's dF/F + events figure, with
-    the path relative to the asset root so the QC portal can resolve it.
+    Each entry references one ROI's dF/F and events figure, relative to the
+    asset root.
 
     Parameters
     ----------
@@ -71,8 +59,8 @@ def build_events_curation_metric(
 ) -> CurationMetric:
     """Construct the per-ROI event-detection curation metric.
 
-    Seeded PASS by ``"Automated"`` — deconvolution ran. A reviewer curates
-    individual ROIs from the referenced figures.
+    Seeded PASS by ``"Automated"``; a reviewer curates individual ROIs from
+    the referenced figures.
 
     Parameters
     ----------
