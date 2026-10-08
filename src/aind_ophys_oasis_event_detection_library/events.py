@@ -222,41 +222,6 @@ if __name__ == "__main__":
     setup_logging(
         "aind-ophys-oasis-event-detection", mouse_id=subject_id, session_name=name
     )
-    # convert time constants to parameters of the auto-regressive (AR) process
-    if args.tau is None or args.tau_rise is None:  # automatically estimate tau
-        if args.tau_rise == 0:  # negligible rise time -> AR1
-            params["g"] = (None,)
-        else:  # automatically estimate rise time too -> AR2
-            params["g"] = (None, None)
-    else:
-        if args.tau_rise == 0:  # negligible rise time -> AR1
-            params["g"] = (np.exp(-1 / (args.tau * frame_rate)),)
-        else:  # AR2
-            d, r = (
-                np.exp(-1 / (args.tau * frame_rate)),
-                np.exp(-1 / (args.tau_rise * frame_rate)),
-            )
-            params["g"] = (d + r, -d * r)
-
-    if not args.estimate_parameters:
-        if args.tau is None:
-            raise UserWarning(
-                "'estimate_parameters' is False, but no value for decay time "
-                "constant 'tau' has been provided."
-            )
-        if args.lam is None:
-            params["lam"] = 0
-            logging.info(
-                "'estimate_parameters' is False, but no value for sparsity penalty "
-                " 'lam' has been provided,thus automatically setting 'lam' to 0."
-            )
-        if args.b is None:
-            params["b"] = 0
-            logging.info(
-                "'estimate_parameters' is False, but no value for baseline 'b' has been provided, "
-                "thus automatically setting 'b' to 0."
-            )
-
     def _deconv(t):
         if np.isnan(t).any():  # check if trace has any nans, if so return all nans
             c, s = np.full_like(t, np.nan), np.full_like(t, np.nan)
