@@ -2,7 +2,7 @@
 
 from datetime import datetime as dt
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 import pytz
 from aind_data_schema.core.quality_control import (
@@ -19,18 +19,18 @@ from aind_pophys_metadata import quality_control as shared_qc
 _SEATTLE_TZ = pytz.timezone("America/Los_Angeles")
 
 EVALUATION = "Events"
-METRIC_TYPE = "Operational QC"
+METRIC_TYPE = "Informational"
 CURATION_TYPE = "ROI event traces"
 
 
 def roi_plot_references(
     experiment_id: str,
     num_rois: int,
-) -> List[dict]:
-    """Build the per-ROI plot reference payload for the curation metric.
+) -> Dict[str, Dict[str, str]]:
+    """Build the per-ROI figure references for the curation metric.
 
-    Each entry references one ROI's dF/F and events figure, relative to the
-    asset root.
+    Each reference is the path of one ROI's dF/F and events figure, relative
+    to the asset root.
 
     Parameters
     ----------
@@ -41,16 +41,16 @@ def roi_plot_references(
 
     Returns
     -------
-    list of dict
-        One ``{"roi_id": ..., "reference": ...}`` entry per ROI.
+    dict
+        ``{"<roi id>": {"reference": <path>}}`` with one entry per ROI; empty
+        when there are no ROIs.
     """
-    return [
-        {
-            "roi_id": str(roi_id),
-            "reference": (f"{experiment_id}/events/plots/" f"{experiment_id}_{roi_id}_oasis.png"),
+    return {
+        str(roi_id): {
+            "reference": (f"{experiment_id}/events/plots/" f"{experiment_id}_{roi_id}_oasis.png")
         }
         for roi_id in range(num_rois)
-    ]
+    }
 
 
 def build_events_curation_metric(
@@ -59,15 +59,15 @@ def build_events_curation_metric(
 ) -> CurationMetric:
     """Construct the per-ROI event-detection curation metric.
 
-    Seeded PASS by ``"Automated"``; a reviewer curates individual ROIs from
-    the referenced figures.
+    Seeded PASS by ``"Automated"``. The value is a one-element list holding
+    the ROI-to-figure mapping from :func:`roi_plot_references`.
 
     Parameters
     ----------
     experiment_id : str
         Plane/experiment identifier used in the metric name.
     num_rois : int
-        Number of ROIs deconvolved; one reference entry is created per ROI.
+        Number of ROIs deconvolved; one reference is created per ROI.
 
     Returns
     -------
@@ -79,8 +79,8 @@ def build_events_curation_metric(
         modality=Modality.POPHYS,
         stage=Stage.PROCESSING,
         type=CURATION_TYPE,
-        value=roi_plot_references(experiment_id, num_rois),
-        description="dF/F and per-ROI events detected by OASIS",
+        value=[roi_plot_references(experiment_id, num_rois)],
+        description="Events detected for each ROI by OASIS, shown below its dF/F trace.",
         tags={"evaluation": EVALUATION, "type": METRIC_TYPE},
         status_history=[
             QCStatus(
