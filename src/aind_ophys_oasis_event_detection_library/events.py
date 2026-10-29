@@ -154,55 +154,6 @@ def write_qc_evalutation(output_dir: Path, experiment_id: str, N: int) -> None:
         json.dump(json.loads(evaluation.model_dump_json()), f, indent=4)
 
 
-def get_metadata(input_dir: Path, meta_type: str) -> dict:
-    """Extracts metadata from processing and subject json files
-
-    Parameters
-    ----------
-    input_dir: Path
-        input directory
-    meta_type: str
-        type of metadata to extract
-
-    Returns
-    -------
-    metadata: dict
-        metadata
-    """
-    input_fp = next(input_dir.rglob(f"{meta_type}"), "")
-    if not input_fp:
-        raise FileNotFoundError(f"No {meta_type} file found in {input_dir}")
-    with open(input_fp, "r") as f:
-        metadata = json.load(f)
-    return metadata
-
-
-def get_frame_rate(session: dict) -> float:
-    """Attempt to pull frame rate from session.json
-    Raises ValueError if frame rate not in session.json
-
-    Parameters
-    ----------
-    session: dict
-        session metadata
-
-    Returns
-    -------
-    frame_rate: float
-        frame rate in Hz
-    """
-    frame_rate_hz = None
-    for i in session.get("data_streams", ""):
-        if i.get("ophys_fovs", ""):
-            frame_rate_hz = i["ophys_fovs"][0]["frame_rate"]
-            break
-    if frame_rate_hz is None:
-        raise ValueError("No frame rate found in session.json")
-    if isinstance(frame_rate_hz, str):
-        frame_rate_hz = float(frame_rate_hz)
-    return frame_rate_hz
-
-
 if __name__ == "__main__":
     args = parser.parse_args()
     params = vars(args)
@@ -213,12 +164,6 @@ if __name__ == "__main__":
     experiment_id = dff_dir.parent.name
     dff_fp = next(dff_dir.glob("*dff.h5"))
     output_dir = make_output_directory(output_dir, experiment_id)
-    session_data = get_metadata(input_dir, "session.json")
-    frame_rate = get_frame_rate(session_data)
-    subject_data = get_metadata(input_dir, "subject.json")
-    subject_id = subject_data.get("subject_id", "")
-    data_description_data = get_metadata(input_dir, "data_description.json")
-    name = data_description_data.get("name", "")
     setup_logging(
         "aind-ophys-oasis-event-detection", mouse_id=subject_id, session_name=name
     )
