@@ -7,15 +7,73 @@
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
 ![Python](https://img.shields.io/badge/python->=3.10-blue?logo=python)
 
+Backing library for the `aind-ophys-oasis-event-detection` Code Ocean capsule. It reads one
+plane's dF/F traces, deconvolves them with [OASIS](https://github.com/j-friedrich/OASIS) into
+denoised calcium and fluorescence events, and emits the events HDF5, per-ROI QC figures and the
+`aind-data-schema` v2 metadata documents. The capsule is a thin wrapper that calls
+`job.run()`; all logic lives here and is unit-tested.
+
 ## Usage
- - To use this template, click the green `Use this template` button and `Create new repository`.
- - After github initially creates the new repository, please wait an extra minute for the initialization scripts to finish organizing the repo.
- - Automated semantic version increments are ENABLED: `svc-aindscicomp` has "write" access and the tag job's repository-name guard has been removed from `.github/workflows/tag_and_publish.yml`, so the semantic version is incremented on every commit to the main branch.
- - To publish to PyPI, first submit a request to the [Scientific Computing issue tracker](https://github.com/AllenNeuralDynamics/aind-scientific-computing/issues)
- to have the repository added as a Trusted Publisher for PyPI. Please specify the repository name (and desired PyPI package name if different).
- After the repository is added as a Trusted Publisher, enable semantic versioning and change the publish job's `if: false` to `if: true` in `.github/workflows/tag_and_publish.yml`. The code will now be published to PyPI every time the code is committed into the main branch.
- - The `.github/workflows/test_and_lint.yml` file will run automated tests and style checks every time a Pull Request is opened. If the checks are undesired, the `test_and_lint.yml` can be deleted. The strictness of the code coverage level, etc., can be modified by altering the configurations in the `pyproject.toml` file and the `.flake8` file.
- - Please make any necessary updates to the README.md and CITATION.cff files
+
+```python
+from aind_ophys_oasis_event_detection_library.job import run
+
+run()  # settings come from CLI arguments / environment
+```
+
+Settings are parsed by pydantic-settings, so every field is also a `--name=value` command-line
+option (`--tau`, `--tau_rise`, `--estimate_parameters`, `--no_qc`, ...). See `settings.py` for the
+full list and defaults.
+
+### Input
+
+The upstream dF/F step's results, mounted at `--input_dir` (default `../data/`):
+
+- `<experiment_id>/dff/<experiment_id>_dff.h5`, with the trace matrix in the `data` dataset of
+  shape `(n_rois, n_frames)`
+- the acquisition metadata for the asset: `acquisition.json` (v2), `session.json` (v1) or a
+  minimal `metadata.json`. The frame rate is required, and is resolved from the core file, then
+  `platform.json`, then the `--frame_rate` override.
+
+### Output
+
+Everything is written under `<output_dir>/<experiment_id>/events/`:
+
+- `<experiment_id>_events_oasis.h5` — `events` and `denoised`, both `f4` and shaped
+  `(n_rois, n_frames)`. When OASIS estimates the model parameters, the per-ROI `f4` arrays
+  `b_hat`, `tau_hat`, `lam_hat` and (AR2 only) `tau_rise_hat` are written as well.
+- `plots/<experiment_id>_<roi_id>_oasis.png` — one dF/F, denoised-trace and event-rate figure per
+  ROI, skipped with `--no_qc`.
+- `processing.json` — a full `Processing` document, written on both the success and the error path.
+- `quality_control.json` — a full `QualityControl` document holding the per-ROI curation metric
+  that references the figures above.
+
+## Modules
+
+### `job.py`
+`run()`, the entry point: loads metadata, resolves the run plan, runs the stage under the shared
+`stage_guard`, which owns the `processing.json` lifecycle.
+
+### `settings.py`
+`OasisSettings`, the CLI/env settings model; the Code Ocean app panel is generated from it.
+
+### `params.py`
+`ar_coefficients()`, `taus_from_ar_coefficients()`, `resolve_parameters()` and
+`deconvolve_kwargs()` — converting decay/rise time constants to auto-regressive coefficients and
+back, and mapping the settings onto the keyword names OASIS expects.
+
+### `events.py`
+The compute and the outputs: `find_dff_traces()`, `read_dff_traces()`, `make_output_directory()`,
+`run_deconvolution()` (one trace per worker process), `write_events_h5()`, `write_qc_plots()` and
+`plot_trace_and_events_png()`.
+
+### `qc.py`
+`build_events_curation_metric()`, `roi_plot_references()`, `build_quality_control()` and
+`write_quality_control_json()` — the `quality_control.json` content.
+
+### `utils/metadata_utils.py`
+`load_oasis_metadata()` (metadata reads via `aind-pophys-metadata`'s `CoreMetadata`),
+`upstream_process_names()` and `build_code()`.
 
 ## Level of Support
 Please indicate a level of support:
@@ -45,4 +103,15 @@ Note: --group flag is available only in pip versions >=25.1
 Alternatively, if using [uv](https://docs.astral.sh/uv/), run
 ```bash
 uv sync
+```
+
+## Tests and linters
+
+Tests are `unittest`; coverage and interrogate are both gated at 100%.
+
+```bash
+coverage run -m unittest discover
+coverage report
+flake8 .
+interrogate --verbose .
 ```
