@@ -112,48 +112,6 @@ def plot_trace_and_events_png(
         plt.close(fig)
 
 
-def write_qc_evalutation(output_dir: Path, experiment_id: str, N: int) -> None:
-    """Writes QC metrics to json files. Creates one json file per ROI.
-
-    Parameters
-    ----------
-    output_dir: Path
-        output directory
-    experiment_id: str
-        unique plane id
-    N: int
-        number of ROIs detected
-    """
-    cell_plots = dict()
-    for roi_id in range(N):
-        cell_plots[str(roi_id)] = {
-            "reference": f"{experiment_id}/events/plots/{experiment_id}_{roi_id}_oasis.png"
-        }
-    curation = CurationMetric(curations=[json.dumps(cell_plots)])
-    metric = QCMetric(
-        name=f"{experiment_id} Event Detection",
-        description="dF / F and roi events detected by oasis",
-        reference="",
-        status_history=[
-            QCStatus(evaluator="Automated", timestamp=dt.now(), status=Status.PASS)
-        ],
-        value=curation,
-    )
-
-    evaluation = QCEvaluation(
-        modality=Modality.from_abbreviation("pophys"),
-        stage=Stage.PROCESSING,
-        name="Events",
-        description="Events detected in each roi for all fovs",
-        allow_failed_metrics=False,
-        metrics=[metric],
-        tags=["events"],
-    )
-
-    with open(output_dir / f"{experiment_id}_oasis_events_evaluation.json", "w") as f:
-        json.dump(json.loads(evaluation.model_dump_json()), f, indent=4)
-
-
 if __name__ == "__main__":
     args = parser.parse_args()
     params = vars(args)
