@@ -28,7 +28,7 @@ dependencies = [
     "matplotlib==3.10.9",
     "seaborn==0.13.2",
     "pydantic==2.11.10",
-    "pydantic-settings==2.14.2",
+    "pydantic-settings==2.15.0",
     "pytz==2026.3.post1",
 ]
 
